@@ -1,108 +1,724 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0">
-<title>Emoji Cipher Pro v2</title>
-<style>
-body{font-family:Arial,sans-serif;background:#0b1020;color:#fff;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0}
-.card{width:95%;max-width:800px;background:#151b33;padding:20px;border-radius:20px}
-textarea,input,button{width:100%;padding:12px;margin-top:10px;border-radius:12px;border:none}
-button{cursor:pointer;background:#6d5dfc;color:#fff;font-weight:bold}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emoji Encrypter Pro</title>
+    <style>
+        :root {
+            --bg-color: #050505;
+            --glass-bg: rgba(255, 255, 255, 0.03);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-highlight: rgba(255, 255, 255, 0.15);
+            --text-main: #ffffff;
+            --text-muted: #8e8e93;
+            --accent: #0a84ff;
+            --danger: #ff453a;
+            --success: #32d74b;
+            --warning: #ffd60a;
+            --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: var(--font-family);
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        /* Aurora Background */
+        .aurora {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            z-index: -2;
+            overflow: hidden;
+            background: #000;
+        }
+        
+        .blob {
+            position: absolute;
+            filter: blur(90px);
+            opacity: 0.6;
+            animation: float 20s infinite alternate;
+        }
+
+        .blob-1 { top: -10%; left: -10%; width: 50vw; height: 50vw; background: radial-gradient(circle, #5e35b1, #3949ab); animation-delay: 0s; }
+        .blob-2 { bottom: -20%; right: -10%; width: 60vw; height: 60vw; background: radial-gradient(circle, #00897b, #1e88e5); animation-delay: -5s; }
+        .blob-3 { top: 40%; left: 30%; width: 40vw; height: 40vw; background: radial-gradient(circle, #d81b60, #8e24aa); opacity: 0.4; animation-delay: -10s; }
+
+        @keyframes float {
+            0% { transform: translate(0, 0) scale(1); }
+            100% { transform: translate(10%, 15%) scale(1.2); }
+        }
+
+        /* Floating Particles */
+        .particles {
+            position: fixed;
+            top: 0; left: 0; width: 100vw; height: 100vh;
+            z-index: -1; pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 50%;
+            animation: drift 15s linear infinite;
+        }
+
+        @keyframes drift {
+            0% { transform: translateY(100vh) rotate(0deg); opacity: 0; }
+            10% { opacity: 1; }
+            90% { opacity: 1; }
+            100% { transform: translateY(-20vh) rotate(360deg); opacity: 0; }
+        }
+
+        /* Container & RGB Border */
+        .rgb-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            border-radius: 32px;
+            padding: 1px;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0));
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .rgb-wrapper::before {
+            content: '';
+            position: absolute;
+            top: -50%; left: -50%; width: 200%; height: 200%;
+            background: conic-gradient(transparent, rgba(255,255,255,0.3), transparent 30%);
+            animation: rotate 6s linear infinite;
+            z-index: -1;
+        }
+
+        @keyframes rotate {
+            100% { transform: rotate(360deg); }
+        }
+
+        /* Main Glass Card */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(40px);
+            -webkit-backdrop-filter: blur(40px);
+            border-radius: 31px;
+            padding: 32px;
+            box-shadow: inset 0 0 0 1px var(--glass-border), 0 20px 40px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+        }
+
+        header h1 {
+            font-size: 28px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #fff, #a1a1a6);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        /* Inputs & Textareas */
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: relative;
+        }
+
+        label {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        textarea, input[type="password"], input[type="text"] {
+            width: 100%;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--glass-border);
+            border-radius: 16px;
+            padding: 16px;
+            color: var(--text-main);
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s ease;
+            resize: vertical;
+        }
+
+        textarea:focus, input:focus {
+            border-color: var(--glass-highlight);
+            background: rgba(0, 0, 0, 0.4);
+            box-shadow: 0 0 0 4px rgba(255,255,255,0.05);
+        }
+
+        textarea { min-height: 120px; }
+        
+        .char-counter { font-size: 12px; color: var(--text-muted); }
+
+        /* Password Field */
+        .password-wrapper { position: relative; }
+        
+        .toggle-pwd {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            padding: 4px;
+        }
+
+        .strength-meter {
+            height: 4px;
+            border-radius: 2px;
+            background: rgba(255,255,255,0.1);
+            margin-top: 8px;
+            overflow: hidden;
+        }
+        .strength-fill {
+            height: 100%;
+            width: 0%;
+            transition: all 0.3s ease;
+        }
+
+        /* Buttons */
+        .btn-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .action-row {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        button {
+            padding: 14px 20px;
+            border-radius: 14px;
+            font-size: 15px;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-primary {
+            background: var(--text-main);
+            color: var(--bg-color);
+        }
+        .btn-primary:hover { background: #e0e0e0; transform: translateY(-2px); }
+        .btn-primary:active { transform: translateY(0); }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.08);
+            color: var(--text-main);
+            border: 1px solid var(--glass-border);
+        }
+        .btn-secondary:hover { background: rgba(255,255,255,0.15); }
+        
+        .icon-btn { padding: 10px; border-radius: 10px; flex-shrink: 0; }
+
+        /* History & Empty State */
+        .history-panel {
+            background: rgba(0,0,0,0.2);
+            border-radius: 16px;
+            padding: 16px;
+            border: 1px solid var(--glass-border);
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .history-item {
+            padding: 12px;
+            border-bottom: 1px solid var(--glass-border);
+            cursor: pointer;
+            transition: background 0.2s;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .history-item:last-child { border-bottom: none; }
+        .history-item:hover { background: rgba(255,255,255,0.05); }
+
+        .empty-state {
+            text-align: center;
+            padding: 24px;
+            color: var(--text-muted);
+            font-size: 14px;
+        }
+
+        /* Toasts */
+        .toast-container {
+            position: fixed;
+            bottom: 32px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            z-index: 1000;
+        }
+
+        .toast {
+            background: rgba(20, 20, 20, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: white;
+            padding: 12px 24px;
+            border-radius: 100px;
+            font-size: 14px;
+            font-weight: 500;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            animation: slideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Loader */
+        .loader-overlay {
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(10px);
+            border-radius: 31px;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 10;
+            flex-direction: column;
+            gap: 16px;
+        }
+        
+        .spinner {
+            width: 40px; height: 40px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: var(--text-main);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+
+        @media (max-width: 480px) {
+            .glass-card { padding: 20px; }
+            .btn-group { grid-template-columns: 1fr; }
+        }
+    </style>
 </head>
 <body>
-<div class="card">
-<h2>🔐 Emoji Cipher Pro v2</h2>
-<textarea id="input" placeholder="Text or Emoji Code"></textarea>
-<input id="password" type="password" placeholder="Password">
-<button onclick="encryptText()">Encrypt</button>
-<button onclick="decryptText()">Decrypt</button>
-<textarea id="output" placeholder="Result" readonly></textarea>
-</div>
 
-<script>
-const EMOJIS=["😀","😁","😂","🤣","😃","😄","😅","😆","😉","😊","😋","😎","😍","😘","🥰","😗"];
+    <div class="aurora">
+        <div class="blob blob-1"></div>
+        <div class="blob blob-2"></div>
+        <div class="blob blob-3"></div>
+    </div>
+    <div class="particles" id="particles"></div>
 
-function bytesToEmoji(bytes){
- let out="";
- for(const b of bytes){
-   out+=EMOJIS[(b>>4)&15]+EMOJIS[b&15];
- }
- return out;
-}
+    <div class="rgb-wrapper">
+        <div class="glass-card">
+            
+            <div class="loader-overlay" id="loader">
+                <div class="spinner"></div>
+                <div style="font-weight: 500;">Processing...</div>
+            </div>
 
-function emojiToBytes(text){
- const arr=[...text];
- const bytes=[];
- for(let i=0;i<arr.length;i+=2){
-   const h=EMOJIS.indexOf(arr[i]);
-   const l=EMOJIS.indexOf(arr[i+1]);
-   if(h<0||l<0) throw new Error("Invalid emoji code");
-   bytes.push((h<<4)|l);
- }
- return new Uint8Array(bytes);
-}
+            <header>
+                <h1>
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path></svg>
+                    SafeMoji Pro
+                </h1>
+            </header>
 
-async function getKey(password,salt){
- const enc=new TextEncoder();
- const keyMaterial=await crypto.subtle.importKey(
-   "raw",enc.encode(password),"PBKDF2",false,["deriveKey"]
- );
- return crypto.subtle.deriveKey(
-  {name:"PBKDF2",salt:salt,iterations:100000,hash:"SHA-256"},
-  keyMaterial,
-  {name:"AES-GCM",length:256},
-  false,
-  ["encrypt","decrypt"]
- );
-}
+            <div class="action-row">
+                <button class="btn-secondary icon-btn" id="btn-import" title="Import from TXT">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                </button>
+                <input type="file" id="file-import" accept=".txt" style="display: none;">
+                <button class="btn-secondary icon-btn" id="btn-export" title="Export to TXT">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5-5 5 5M12 3v12"/></svg>
+                </button>
+                <button class="btn-secondary icon-btn" id="btn-clear" style="margin-left: auto;" title="Clear All">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+                </button>
+            </div>
 
-async function encryptText(){
- try{
-  const text=document.getElementById("input").value;
-  const password=document.getElementById("password").value;
-  const enc=new TextEncoder();
+            <div class="input-group">
+                <label>
+                    Text / Encrypted Emojis
+                    <span class="char-counter" id="char-count">0 chars</span>
+                </label>
+                <textarea id="main-input" placeholder="Enter text to encrypt, or paste emojis to decrypt..."></textarea>
+            </div>
 
-  const salt=crypto.getRandomValues(new Uint8Array(16));
-  const iv=crypto.getRandomValues(new Uint8Array(12));
+            <div class="input-group">
+                <label>Security Key</label>
+                <div class="password-wrapper">
+                    <input type="password" id="password" placeholder="Enter a strong password">
+                    <button class="toggle-pwd" id="toggle-pwd" title="Toggle Visibility">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    </button>
+                </div>
+                <div class="strength-meter"><div class="strength-fill" id="strength-fill"></div></div>
+            </div>
 
-  const key=await getKey(password,salt);
-  const cipher=await crypto.subtle.encrypt(
-   {name:"AES-GCM",iv},
-   key,
-   enc.encode(text)
-  );
+            <div class="btn-group">
+                <button class="btn-primary" id="btn-encrypt">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+                    Encrypt to Emojis
+                </button>
+                <button class="btn-secondary" id="btn-decrypt">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 9.9-1"></path></svg>
+                    Decrypt Text
+                </button>
+            </div>
 
-  const data=new Uint8Array([...salt,...iv,...new Uint8Array(cipher)]);
-  document.getElementById("output").value=bytesToEmoji(data);
- }catch(e){alert(e.message);}
-}
+            <div class="input-group" style="margin-top: 8px;">
+                <label>Output History <span id="btn-copy" style="cursor:pointer; color:var(--text-main);">Copy Current</span></label>
+                <div class="history-panel" id="history-panel">
+                    <div class="empty-state">No recent encryptions.</div>
+                </div>
+            </div>
 
-async function decryptText(){
- try{
-  const emoji=document.getElementById("input").value.trim();
-  const password=document.getElementById("password").value;
+        </div>
+    </div>
 
-  const data=emojiToBytes(emoji);
-  const salt=data.slice(0,16);
-  const iv=data.slice(16,28);
-  const cipher=data.slice(28);
+    <div class="toast-container" id="toast-container"></div>
 
-  const key=await getKey(password,salt);
+    <script>
+        // --- 1. UI Setup & Particles ---
+        function createParticles() {
+            const container = document.getElementById('particles');
+            for(let i=0; i<15; i++) {
+                let div = document.createElement('div');
+                div.className = 'particle';
+                let size = Math.random() * 40 + 10;
+                div.style.width = size + 'px';
+                div.style.height = size + 'px';
+                div.style.left = Math.random() * 100 + 'vw';
+                div.style.animationDelay = (Math.random() * 15) + 's';
+                div.style.animationDuration = (Math.random() * 10 + 10) + 's';
+                container.appendChild(div);
+            }
+        }
+        createParticles();
 
-  const plain=await crypto.subtle.decrypt(
-   {name:"AES-GCM",iv},
-   key,
-   cipher
-  );
+        // --- 2. Emoji Mapping Dictionary (Strict Single Codepoint Mapping) ---
+        // Base64 requires 64 characters + 1 for padding '='. Total 65.
+        // We use unicode plants/foods range (U+1F340 to U+1F380) to ensure strict single-codepoint symbols.
+        const b64chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
+        const emojiMap = Array.from({length: 65}, (_, i) => String.fromCodePoint(0x1F340 + i));
 
-  document.getElementById("output").value=
-   new TextDecoder().decode(plain);
- }catch(e){
-  alert("Wrong password or invalid emoji code");
- }
-}
-</script>
+        function encodeToEmoji(b64String) {
+            let res = '';
+            for (let char of b64String) {
+                let idx = b64chars.indexOf(char);
+                if (idx !== -1) res += emojiMap[idx];
+            }
+            return res;
+        }
+
+        function decodeFromEmoji(emojiString) {
+            let res = '';
+            // Array.from safely splits string by codepoints
+            const chars = Array.from(emojiString);
+            for (let char of chars) {
+                let idx = emojiMap.indexOf(char);
+                if (idx !== -1) {
+                    res += b64chars[idx];
+                } else {
+                    // Ignore non-mapped characters (like spaces)
+                }
+            }
+            return res;
+        }
+
+        // --- 3. Web Crypto API Implementation ---
+        const encoder = new TextEncoder();
+        const decoder = new TextDecoder();
+
+        async function deriveKey(password, salt) {
+            const keyMaterial = await crypto.subtle.importKey(
+                "raw", encoder.encode(password), {name: "PBKDF2"}, false, ["deriveBits", "deriveKey"]
+            );
+            return await crypto.subtle.deriveKey(
+                { name: "PBKDF2", salt: salt, iterations: 100000, hash: "SHA-256" },
+                keyMaterial, { name: "AES-GCM", length: 256 }, true, ["encrypt", "decrypt"]
+            );
+        }
+
+        function bufferToBase64(buffer) {
+            const bytes = new Uint8Array(buffer);
+            let binary = '';
+            for (let i = 0; i < bytes.byteLength; i++) { binary += String.fromCharCode(bytes[i]); }
+            return window.btoa(binary);
+        }
+
+        function base64ToBuffer(base64) {
+            const binary_string = window.atob(base64);
+            const bytes = new Uint8Array(binary_string.length);
+            for (let i = 0; i < binary_string.length; i++) { bytes[i] = binary_string.charCodeAt(i); }
+            return bytes;
+        }
+
+        async function encryptData(text, password) {
+            const salt = crypto.getRandomValues(new Uint8Array(16));
+            const iv = crypto.getRandomValues(new Uint8Array(12));
+            const key = await deriveKey(password, salt);
+            
+            const encryptedContent = await crypto.subtle.encrypt(
+                { name: "AES-GCM", iv: iv }, key, encoder.encode(text)
+            );
+
+            // Payload structure: Salt(16) + IV(12) + Ciphertext
+            const payload = new Uint8Array(salt.length + iv.length + encryptedContent.byteLength);
+            payload.set(salt, 0);
+            payload.set(iv, salt.length);
+            payload.set(new Uint8Array(encryptedContent), salt.length + iv.length);
+
+            return encodeToEmoji(bufferToBase64(payload));
+        }
+
+        async function decryptData(emojiText, password) {
+            const b64 = decodeFromEmoji(emojiText);
+            if (!b64) throw new Error("No valid emoji code found.");
+            
+            let encryptedBytes;
+            try {
+                encryptedBytes = base64ToBuffer(b64);
+            } catch(e) { throw new Error("Invalid emoji sequence format."); }
+
+            if(encryptedBytes.length < 28) throw new Error("Data corrupted or incomplete.");
+
+            const salt = encryptedBytes.slice(0, 16);
+            const iv = encryptedBytes.slice(16, 28);
+            const data = encryptedBytes.slice(28);
+
+            const key = await deriveKey(password, salt);
+            
+            try {
+                const decryptedContent = await crypto.subtle.decrypt(
+                    { name: "AES-GCM", iv: iv }, key, data
+                );
+                return decoder.decode(decryptedContent);
+            } catch (e) {
+                throw new Error("Decryption failed. Incorrect password.");
+            }
+        }
+
+        // --- 4. UI Interaction & Logic ---
+        const els = {
+            input: document.getElementById('main-input'),
+            pwd: document.getElementById('password'),
+            btnEnc: document.getElementById('btn-encrypt'),
+            btnDec: document.getElementById('btn-decrypt'),
+            btnToggle: document.getElementById('toggle-pwd'),
+            btnClear: document.getElementById('btn-clear'),
+            btnCopy: document.getElementById('btn-copy'),
+            btnExport: document.getElementById('btn-export'),
+            btnImport: document.getElementById('btn-import'),
+            fileImport: document.getElementById('file-import'),
+            charCount: document.getElementById('char-count'),
+            strengthFill: document.getElementById('strength-fill'),
+            historyPanel: document.getElementById('history-panel'),
+            loader: document.getElementById('loader'),
+            toasts: document.getElementById('toast-container')
+        };
+
+        // Toast Notification
+        function showToast(msg, type='success') {
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            const icon = type === 'success' ? '✅' : '❌';
+            toast.innerHTML = `<span>${icon}</span> ${msg}`;
+            els.toasts.appendChild(toast);
+            setTimeout(() => {
+                toast.style.animation = 'slideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) reverse forwards';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // Loader Toggle
+        function toggleLoader(show) {
+            els.loader.style.display = show ? 'flex' : 'none';
+        }
+
+        // Event Listeners
+        els.input.addEventListener('input', () => {
+            els.charCount.innerText = `${els.input.value.length} chars`;
+        });
+
+        els.pwd.addEventListener('input', () => {
+            const val = els.pwd.value;
+            let strength = 0;
+            if(val.length > 5) strength += 33;
+            if(val.length > 10) strength += 33;
+            if(/[A-Z]/.test(val) && /[0-9]/.test(val) && /[^A-Za-z0-9]/.test(val)) strength += 34;
+            
+            els.strengthFill.style.width = strength + '%';
+            if(strength < 40) els.strengthFill.style.backgroundColor = 'var(--danger)';
+            else if(strength < 80) els.strengthFill.style.backgroundColor = 'var(--warning)';
+            else els.strengthFill.style.backgroundColor = 'var(--success)';
+        });
+
+        els.btnToggle.addEventListener('click', () => {
+            const type = els.pwd.type === 'password' ? 'text' : 'password';
+            els.pwd.type = type;
+        });
+
+        els.btnClear.addEventListener('click', () => {
+            els.input.value = '';
+            els.pwd.value = '';
+            els.input.dispatchEvent(new Event('input'));
+            els.pwd.dispatchEvent(new Event('input'));
+            showToast("Inputs cleared");
+        });
+
+        els.btnCopy.addEventListener('click', () => {
+            if(!els.input.value) return showToast("Nothing to copy", "error");
+            navigator.clipboard.writeText(els.input.value);
+            showToast("Copied to clipboard!");
+        });
+
+        // History Management
+        let history = JSON.parse(localStorage.getItem('safemoji_history') || '[]');
+        function renderHistory() {
+            if(history.length === 0) {
+                els.historyPanel.innerHTML = '<div class="empty-state">No recent encryptions.</div>';
+                return;
+            }
+            els.historyPanel.innerHTML = '';
+            history.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = 'history-item';
+                div.innerHTML = `
+                    <span style="white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 80%;">${item.text}</span>
+                    <span style="font-size: 11px; color: var(--text-muted);">${new Date(item.time).toLocaleTimeString()}</span>
+                `;
+                div.onclick = () => { els.input.value = item.text; els.input.dispatchEvent(new Event('input')); };
+                els.historyPanel.appendChild(div);
+            });
+        }
+        function saveHistory(text) {
+            history.unshift({ text, time: Date.now() });
+            if(history.length > 10) history.pop();
+            localStorage.setItem('safemoji_history', JSON.stringify(history));
+            renderHistory();
+        }
+        renderHistory();
+
+        // Core Actions
+        els.btnEnc.addEventListener('click', async () => {
+            if(!els.input.value) return showToast("Enter text to encrypt", "error");
+            if(!els.pwd.value) return showToast("Password is required", "error");
+            
+            toggleLoader(true);
+            try {
+                // slight delay to let loader render
+                await new Promise(r => setTimeout(r, 50)); 
+                const emojiRes = await encryptData(els.input.value, els.pwd.value);
+                els.input.value = emojiRes;
+                els.input.dispatchEvent(new Event('input'));
+                saveHistory(emojiRes);
+                showToast("Successfully Encrypted!");
+            } catch(e) {
+                showToast("Encryption error", "error");
+            } finally {
+                toggleLoader(false);
+            }
+        });
+
+        els.btnDec.addEventListener('click', async () => {
+            if(!els.input.value) return showToast("Enter emojis to decrypt", "error");
+            if(!els.pwd.value) return showToast("Password is required", "error");
+            
+            toggleLoader(true);
+            try {
+                await new Promise(r => setTimeout(r, 50));
+                const textRes = await decryptData(els.input.value, els.pwd.value);
+                els.input.value = textRes;
+                els.input.dispatchEvent(new Event('input'));
+                showToast("Successfully Decrypted!");
+            } catch(e) {
+                showToast(e.message, "error");
+            } finally {
+                toggleLoader(false);
+            }
+        });
+
+        // Export & Import
+        els.btnExport.addEventListener('click', () => {
+            if(!els.input.value) return showToast("Nothing to export", "error");
+            const blob = new Blob([els.input.value], {type: "text/plain"});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `safemoji_${Date.now()}.txt`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast("Exported as TXT");
+        });
+
+        els.btnImport.addEventListener('click', () => els.fileImport.click());
+        els.fileImport.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                els.input.value = ev.target.result;
+                els.input.dispatchEvent(new Event('input'));
+                showToast("File imported");
+            };
+            reader.readAsText(file);
+            e.target.value = ''; // reset
+        });
+
+    </script>
 </body>
 </html>
