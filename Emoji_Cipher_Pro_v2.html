@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Emoji Cipher Pro v2</title>
+<style>
+body{font-family:Arial,sans-serif;background:#0b1020;color:#fff;display:flex;justify-content:center;align-items:center;min-height:100vh;margin:0}
+.card{width:95%;max-width:800px;background:#151b33;padding:20px;border-radius:20px}
+textarea,input,button{width:100%;padding:12px;margin-top:10px;border-radius:12px;border:none}
+button{cursor:pointer;background:#6d5dfc;color:#fff;font-weight:bold}
+</style>
+</head>
+<body>
+<div class="card">
+<h2>🔐 Emoji Cipher Pro v2</h2>
+<textarea id="input" placeholder="Text or Emoji Code"></textarea>
+<input id="password" type="password" placeholder="Password">
+<button onclick="encryptText()">Encrypt</button>
+<button onclick="decryptText()">Decrypt</button>
+<textarea id="output" placeholder="Result" readonly></textarea>
+</div>
+
+<script>
+const EMOJIS=["😀","😁","😂","🤣","😃","😄","😅","😆","😉","😊","😋","😎","😍","😘","🥰","😗"];
+
+function bytesToEmoji(bytes){
+ let out="";
+ for(const b of bytes){
+   out+=EMOJIS[(b>>4)&15]+EMOJIS[b&15];
+ }
+ return out;
+}
+
+function emojiToBytes(text){
+ const arr=[...text];
+ const bytes=[];
+ for(let i=0;i<arr.length;i+=2){
+   const h=EMOJIS.indexOf(arr[i]);
+   const l=EMOJIS.indexOf(arr[i+1]);
+   if(h<0||l<0) throw new Error("Invalid emoji code");
+   bytes.push((h<<4)|l);
+ }
+ return new Uint8Array(bytes);
+}
+
+async function getKey(password,salt){
+ const enc=new TextEncoder();
+ const keyMaterial=await crypto.subtle.importKey(
+   "raw",enc.encode(password),"PBKDF2",false,["deriveKey"]
+ );
+ return crypto.subtle.deriveKey(
+  {name:"PBKDF2",salt:salt,iterations:100000,hash:"SHA-256"},
+  keyMaterial,
+  {name:"AES-GCM",length:256},
+  false,
+  ["encrypt","decrypt"]
+ );
+}
+
+async function encryptText(){
+ try{
+  const text=document.getElementById("input").value;
+  const password=document.getElementById("password").value;
+  const enc=new TextEncoder();
+
+  const salt=crypto.getRandomValues(new Uint8Array(16));
+  const iv=crypto.getRandomValues(new Uint8Array(12));
+
+  const key=await getKey(password,salt);
+  const cipher=await crypto.subtle.encrypt(
+   {name:"AES-GCM",iv},
+   key,
+   enc.encode(text)
+  );
+
+  const data=new Uint8Array([...salt,...iv,...new Uint8Array(cipher)]);
+  document.getElementById("output").value=bytesToEmoji(data);
+ }catch(e){alert(e.message);}
+}
+
+async function decryptText(){
+ try{
+  const emoji=document.getElementById("input").value.trim();
+  const password=document.getElementById("password").value;
+
+  const data=emojiToBytes(emoji);
+  const salt=data.slice(0,16);
+  const iv=data.slice(16,28);
+  const cipher=data.slice(28);
+
+  const key=await getKey(password,salt);
+
+  const plain=await crypto.subtle.decrypt(
+   {name:"AES-GCM",iv},
+   key,
+   cipher
+  );
+
+  document.getElementById("output").value=
+   new TextDecoder().decode(plain);
+ }catch(e){
+  alert("Wrong password or invalid emoji code");
+ }
+}
+</script>
+</body>
+</html>
